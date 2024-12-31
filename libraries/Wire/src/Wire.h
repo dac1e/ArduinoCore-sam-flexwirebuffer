@@ -41,14 +41,26 @@ public:
 	void end();
 	void setClock(uint32_t);
 	void beginTransmission(uint8_t);
-	void beginTransmission(int);
+  inline void beginTransmission(int address) {beginTransmission(static_cast<uint8_t>(address));}
 	uint8_t endTransmission(void);
-    uint8_t endTransmission(uint8_t);
-	uint8_t requestFrom(uint8_t, uint8_t);
-    uint8_t requestFrom(uint8_t, uint8_t, uint8_t);
-	uint8_t requestFrom(uint8_t, uint8_t, uint32_t, uint8_t, uint8_t);
-	uint8_t requestFrom(int, int);
-    uint8_t requestFrom(int, int, int);
+  uint8_t endTransmission(uint8_t);
+  uint8_t requestFrom(uint8_t, uint8_t, uint32_t, uint8_t, uint8_t);
+  inline uint8_t requestFrom(uint8_t address, uint8_t quantity) {
+    return requestFrom(static_cast<uint8_t>(address), static_cast<uint8_t>(quantity),
+        static_cast<uint8_t>(true));
+  }
+  inline uint8_t requestFrom(uint8_t address, uint8_t quantity, uint8_t sendStop) {
+    return requestFrom(static_cast<uint8_t>(address), static_cast<uint8_t>(quantity),
+        static_cast<uint32_t>(0), static_cast<uint8_t>(0), static_cast<uint8_t>(sendStop));
+  }
+  inline uint8_t requestFrom(int address, int quantity) {
+    return requestFrom(static_cast<uint8_t>(address), static_cast<uint8_t>(quantity),
+        static_cast<uint8_t>(true));
+  }
+  inline uint8_t requestFrom(int address, int quantity, int sendStop) {
+    return requestFrom(static_cast<uint8_t>(address), static_cast<uint8_t>(quantity),
+        static_cast<uint8_t>(sendStop));
+  }
 	virtual size_t write(uint8_t);
 	virtual size_t write(const uint8_t *, size_t);
 	virtual int available(void);
@@ -58,11 +70,11 @@ public:
 	void onReceive(void(*)(int));
 	void onRequest(void(*)(void));
 
-    inline size_t write(unsigned long n) { return write((uint8_t)n); }
-    inline size_t write(long n) { return write((uint8_t)n); }
-    inline size_t write(unsigned int n) { return write((uint8_t)n); }
-    inline size_t write(int n) { return write((uint8_t)n); }
-    using Print::write;
+  inline size_t write(unsigned long n) { return write(static_cast<uint8_t>(n)); }
+  inline size_t write(long n) { return write(static_cast<uint8_t>(n)); }
+  inline size_t write(unsigned int n) { return write(static_cast<uint8_t>(n)); }
+  inline size_t write(int n) { return write(static_cast<uint8_t>(n)); }
+  using Print::write;
 
 	void onService(void);
 
@@ -108,12 +120,12 @@ private:
 	TwoWireStatus status;
 
 	// TWI clock frequency
-	static const uint32_t TWI_CLOCK = 100000;
+	static constexpr uint32_t TWI_CLOCK = 100000;
 	uint32_t twiClock;
 
 	// Timeouts (
-	static const uint32_t RECV_TIMEOUT = 100000;
-	static const uint32_t XMIT_TIMEOUT = 100000;
+	static constexpr uint32_t RECV_TIMEOUT = 100000;
+	static constexpr uint32_t XMIT_TIMEOUT = 100000;
 };
 
 #if WIRE_INTERFACES_COUNT > 0
