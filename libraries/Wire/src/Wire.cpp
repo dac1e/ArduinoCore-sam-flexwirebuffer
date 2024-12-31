@@ -325,7 +325,7 @@ void TwoWire::onService(void) {
 				onRequestCallback();
 			else
 				// create a default 1-byte response
-				write((uint8_t) 0);
+				write(static_cast<uint8_t>(0));
 		}
 	}
 
