@@ -81,25 +81,26 @@ public:
 
 	void onService(void);
 
+  inline size_t rxBufferCapacity()const;
+  inline size_t txBufferCapacity()const;
+  inline size_t srvBufferCapacity()const;
+
 private:
 	// The buffers to be used for this Wire object.
 	TwoWireBuffers::Interface& buffers;
 
 	// RX Buffer
   inline uint8_t* rxBuffer()const;
-  inline size_t rxBufferCapacity()const;
 	uint8_t rxBufferIndex;
 	uint8_t rxBufferLength;
 
 	// TX Buffer
 	uint8_t txAddress;
   inline uint8_t* txBuffer()const;
-  inline size_t txBufferCapacity()const;
 	uint8_t txBufferLength;
 
 	// Service buffer
   inline uint8_t* srvBuffer()const;
-  inline size_t srvBufferCapacity()const;
 	uint8_t srvBufferIndex;
 	uint8_t srvBufferLength;
 
