@@ -27,14 +27,17 @@
 #include "Stream.h"
 #include "variant.h"
 
-#define BUFFER_LENGTH 32
-
  // WIRE_HAS_END means Wire has end()
 #define WIRE_HAS_END 1
 
+
+namespace TwoWireBuffers {
+  class Interface;
+}
+
 class TwoWire : public Stream {
 public:
-	TwoWire(Twi *twi, void(*begin_cb)(void), void(*end_cb)(void));
+	TwoWire(TwoWireBuffers::Interface& twbi, Twi *twi, void(*begin_cb)(void), void(*end_cb)(void));
 	void begin();
 	void begin(uint8_t);
 	void begin(int);
@@ -79,18 +82,24 @@ public:
 	void onService(void);
 
 private:
+	// The buffers to be used for this Wire object.
+	TwoWireBuffers::Interface& buffers;
+
 	// RX Buffer
-	uint8_t rxBuffer[BUFFER_LENGTH];
+  inline uint8_t* rxBuffer()const;
+  inline size_t rxBufferCapacity()const;
 	uint8_t rxBufferIndex;
 	uint8_t rxBufferLength;
 
 	// TX Buffer
 	uint8_t txAddress;
-	uint8_t txBuffer[BUFFER_LENGTH];
+  inline uint8_t* txBuffer()const;
+  inline size_t txBufferCapacity()const;
 	uint8_t txBufferLength;
 
 	// Service buffer
-	uint8_t srvBuffer[BUFFER_LENGTH];
+  inline uint8_t* srvBuffer()const;
+  inline size_t srvBufferCapacity()const;
 	uint8_t srvBufferIndex;
 	uint8_t srvBufferLength;
 
@@ -129,9 +138,13 @@ private:
 };
 
 #if WIRE_INTERFACES_COUNT > 0
+// The buffers for the Wire object
+namespace WireBuffers {extern TwoWireBuffers::Interface& instance();}
 extern TwoWire Wire;
 #endif
 #if WIRE_INTERFACES_COUNT > 1
+// The buffers for the Wire1 object
+namespace Wire1Buffers {extern TwoWireBuffers::Interface& instance();}
 extern TwoWire Wire1;
 #endif
 

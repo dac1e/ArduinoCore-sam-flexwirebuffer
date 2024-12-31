@@ -27,6 +27,7 @@ extern "C" {
 }
 
 #include "Wire.h"
+#include "TwoWireBuffers.h"
 
 static inline bool TWI_FailedAcknowledge(Twi *pTwi) {
 	return pTwi->TWI_SR & TWI_SR_NACK;
@@ -96,12 +97,19 @@ static inline bool TWI_STATUS_NACK(uint32_t status) {
 	return (status & TWI_SR_NACK) == TWI_SR_NACK;
 }
 
-TwoWire::TwoWire(Twi *_twi, void(*_beginCb)(void), void(*_endCb)(void)) :
-	twi(_twi), rxBufferIndex(0), rxBufferLength(0), txAddress(0),
+TwoWire::TwoWire(TwoWireBuffers::Interface& _twbi, Twi *_twi, void(*_beginCb)(void), void(*_endCb)(void)) :
+    buffers(_twbi), twi(_twi), rxBufferIndex(0), rxBufferLength(0), txAddress(0),
 			txBufferLength(0), srvBufferIndex(0), srvBufferLength(0), status(
 					UNINITIALIZED), onBeginCallback(_beginCb), 
 						onEndCallback(_endCb), twiClock(TWI_CLOCK) {
 }
+
+uint8_t* TwoWire::srvBuffer()const {return buffers.srvWireBuffer();}
+size_t TwoWire::srvBufferCapacity()const {return buffers.srvWireBufferCapacity();}
+uint8_t* TwoWire::rxBuffer()const {return buffers.rxWireBuffer();}
+size_t TwoWire::rxBufferCapacity()const {return buffers.rxWireBufferCapacity();}
+uint8_t* TwoWire::txBuffer()const {return buffers.txWireBuffer();}
+size_t TwoWire::txBufferCapacity()const {return buffers.txWireBufferCapacity();}
 
 void TwoWire::begin(void) {
 	if (onBeginCallback)
@@ -147,19 +155,21 @@ void TwoWire::setClock(uint32_t frequency) {
 }
 
 uint8_t TwoWire::requestFrom(uint8_t address, uint8_t quantity, uint32_t iaddress, uint8_t isize, uint8_t sendStop) {
-	if (quantity > BUFFER_LENGTH)
-		quantity = BUFFER_LENGTH;
+	if (quantity > rxBufferCapacity())
+		quantity = rxBufferCapacity();
 
 	// perform blocking read into buffer
 	int readed = 0;
 	TWI_StartRead(twi, address, iaddress, isize);
+
+	uint8_t* const rxBuf = rxBuffer();
 	do {
 		// Stop condition must be set during the reception of last byte
 		if (readed + 1 == quantity)
 			TWI_SendSTOPCondition( twi);
 
 		if (TWI_WaitByteReceived(twi, RECV_TIMEOUT))
-			rxBuffer[readed++] = TWI_ReadByte(twi);
+			rxBuf[readed++] = TWI_ReadByte(twi);
 		else
 			break;
 	} while (readed < quantity);
@@ -196,14 +206,15 @@ void TwoWire::beginTransmission(uint8_t address) {
 uint8_t TwoWire::endTransmission(uint8_t sendStop) {
 	uint8_t error = 0;
 	// transmit buffer (blocking)
-	TWI_StartWrite(twi, txAddress, 0, 0, txBuffer[0]);
+		uint8_t* const txBuf = txBuffer();
+	TWI_StartWrite(twi, txAddress, 0, 0, txBuf[0]);
 	if (!TWI_WaitByteSent(twi, XMIT_TIMEOUT))
 		error = 2;	// error, got NACK on address transmit
 	
 	if (error == 0) {
 		uint16_t sent = 1;
 		while (sent < txBufferLength) {
-			TWI_WriteByte(twi, txBuffer[sent++]);
+			TWI_WriteByte(twi, txBuf[sent++]);
 			if (!TWI_WaitByteSent(twi, XMIT_TIMEOUT))
 				error = 3;	// error, got NACK during data transmmit
 		}
@@ -230,30 +241,32 @@ uint8_t TwoWire::endTransmission(void)
 
 size_t TwoWire::write(uint8_t data) {
 	if (status == MASTER_SEND) {
-		if (txBufferLength >= BUFFER_LENGTH)
+		if (txBufferLength >= txBufferCapacity())
 			return 0;
-		txBuffer[txBufferLength++] = data;
+		txBuffer()[txBufferLength++] = data;
 		return 1;
 	} else {
-		if (srvBufferLength >= BUFFER_LENGTH)
+		if (srvBufferLength >= srvBufferCapacity())
 			return 0;
-		srvBuffer[srvBufferLength++] = data;
+		srvBuffer()[srvBufferLength++] = data;
 		return 1;
 	}
 }
 
 size_t TwoWire::write(const uint8_t *data, size_t quantity) {
 	if (status == MASTER_SEND) {
+    uint8_t* const txBuf = txBuffer();
 		for (size_t i = 0; i < quantity; ++i) {
-			if (txBufferLength >= BUFFER_LENGTH)
+			if (txBufferLength >= txBufferCapacity())
 				return i;
-			txBuffer[txBufferLength++] = data[i];
+			txBuf[txBufferLength++] = data[i];
 		}
 	} else {
+	  uint8_t* const srvBuf = srvBuffer();
 		for (size_t i = 0; i < quantity; ++i) {
-			if (srvBufferLength >= BUFFER_LENGTH)
+			if (srvBufferLength >= srvBufferCapacity())
 				return i;
-			srvBuffer[srvBufferLength++] = data[i];
+			srvBuf[srvBufferLength++] = data[i];
 		}
 	}
 	return quantity;
@@ -265,13 +278,13 @@ int TwoWire::available(void) {
 
 int TwoWire::read(void) {
 	if (rxBufferIndex < rxBufferLength)
-		return rxBuffer[rxBufferIndex++];
+		return rxBuffer()[rxBufferIndex++];
 	return -1;
 }
 
 int TwoWire::peek(void) {
 	if (rxBufferIndex < rxBufferLength)
-		return rxBuffer[rxBufferIndex];
+		return rxBuffer()[rxBufferIndex];
 	return -1;
 }
 
@@ -321,8 +334,13 @@ void TwoWire::onService(void) {
 			// Copy data into rxBuffer
 			// (allows to receive another packet while the
 			// user program reads actual data)
-			for (uint8_t i = 0; i < srvBufferLength; ++i)
-				rxBuffer[i] = srvBuffer[i];
+
+		  uint8_t* const srvBuff = srvBuffer();
+		  uint8_t* const rxBuff = rxBuffer();
+		  for (size_t i = 0; i < srvBufferLength; ++i) {
+				rxBuff[i] = srvBuff[i];
+		  }
+
 			rxBufferIndex = 0;
 			rxBufferLength = srvBufferLength;
 
@@ -339,8 +357,8 @@ void TwoWire::onService(void) {
 
 	if (status == SLAVE_RECV) {
 		if (TWI_STATUS_RXRDY(sr)) {
-			if (srvBufferLength < BUFFER_LENGTH)
-				srvBuffer[srvBufferLength++] = TWI_ReadByte(twi);
+			if (srvBufferLength < srvBufferCapacity())
+				srvBuffer()[srvBufferLength++] = TWI_ReadByte(twi);
 		}
 	}
 
@@ -348,7 +366,7 @@ void TwoWire::onService(void) {
 		if (TWI_STATUS_TXRDY(sr) && !TWI_STATUS_NACK(sr)) {
 			uint8_t c = 'x';
 			if (srvBufferIndex < srvBufferLength)
-				c = srvBuffer[srvBufferIndex++];
+				c = srvBuffer()[srvBufferIndex++];
 			TWI_WriteByte(twi, c);
 		}
 	}
@@ -385,7 +403,7 @@ static void Wire_Deinit(void) {
 	// and pullups were not enabled
 }
 
-TwoWire Wire = TwoWire(WIRE_INTERFACE, Wire_Init, Wire_Deinit);
+TwoWire Wire = TwoWire(WireBuffers::instance(), WIRE_INTERFACE, Wire_Init, Wire_Deinit);
 
 void WIRE_ISR_HANDLER(void) {
 	Wire.onService();
@@ -423,11 +441,12 @@ static void Wire1_Deinit(void) {
 	// and pullups were not enabled
 }
 
-TwoWire Wire1 = TwoWire(WIRE1_INTERFACE, Wire1_Init, Wire1_Deinit);
+TwoWire Wire1 = TwoWire(Wire1Buffers::instance(), WIRE1_INTERFACE, Wire1_Init, Wire1_Deinit);
 
 void WIRE1_ISR_HANDLER(void) {
 	Wire1.onService();
 }
+
 #endif
 
 #pragma GCC diagnostic pop

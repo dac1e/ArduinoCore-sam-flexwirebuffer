@@ -65,14 +65,10 @@ public:
  */
 template<
   size_t RX_CAPACITY, // Receive buffer size. May be zero, if only transmitting data is needed
-  size_t TX_CAPACITY, // Transmit buffer size. May be zero, if only receiving data is needed
-  bool ENABLE_MASTER,   // If master is disabled, it will save twi master buffer space
-  bool ENABLE_SLAVE     // If slave is disabled, it will save twi slave buffer space
+  size_t TX_CAPACITY  // Transmit buffer size. May be zero, if only receiving data is needed
   >
 class Impl : public Interface {
-  static_assert(ENABLE_MASTER == true || ENABLE_SLAVE == true,
-      "You should not disable master and slave together.");
-
+  // Service buffer is neede for transmit and receive.
   static constexpr size_t SRV_CAPACITY =
       RX_CAPACITY > TX_CAPACITY ? RX_CAPACITY : TX_CAPACITY;
 
@@ -94,26 +90,18 @@ public:
 
 } // namespace TwoWireBuffers
 
-namespace WireBuffers { // The buffers for the one and only Wire object
-  extern TwoWireBuffers::Interface& instance();
-}
-
-#define SET_BUFFERS_FOR_MASTER_ONLY(RX_BUFFER_CAPACITY, TX_BUFFER_CAPACITY) \
-    TwoWireBuffers::Interface& instance() { \
-      static TwoWireBuffers::Impl<RX_BUFFER_CAPACITY, TX_BUFFER_CAPACITY, true, false> instance; \
-		  return instance; \
-		}
-
-#define SET_BUFFERS_FOR_SLAVE_ONLY(RX_BUFFER_CAPACITY, TX_BUFFER_CAPACITY) \
-    TwoWireBuffers::Interface& instance() { \
-      static TwoWireBuffers::Impl<RX_BUFFER_CAPACITY, TX_BUFFER_CAPACITY, false, true> instance; \
-      return instance; \
-    }
-
 #define SET_BUFFERS_FOR_BOTH(RX_BUFFER_CAPACITY, TX_BUFFER_CAPACITY) \
     TwoWireBuffers::Interface& instance() { \
-      static TwoWireBuffers::Impl<RX_BUFFER_CAPACITY, TX_BUFFER_CAPACITY, true, true> instance; \
+      static TwoWireBuffers::Impl<RX_BUFFER_CAPACITY, TX_BUFFER_CAPACITY> instance; \
       return instance; \
     }
+
+// This macro is just for compatibility reasons with AVR core
+#define SET_BUFFERS_FOR_MASTER_ONLY(RX_BUFFER_CAPACITY, TX_BUFFER_CAPACITY) \
+    SET_BUFFERS_FOR_BOTH(RX_BUFFER_CAPACITY, TX_BUFFER_CAPACITY)
+
+// This macro is just for compatibility reasons with AVR core
+#define SET_BUFFERS_FOR_SLAVE_ONLY(RX_BUFFER_CAPACITY, TX_BUFFER_CAPACITY) \
+    SET_BUFFERS_FOR_BOTH(RX_BUFFER_CAPACITY, TX_BUFFER_CAPACITY)
 
 #endif /* TwiBuffers_h */

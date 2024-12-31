@@ -18,12 +18,21 @@
 */
 
 #include "TwoWireBuffers.h"
-
+#include "variant.h"
 
 constexpr size_t RX_BUFFER_DEFAULT_LENGTH = 32;
 constexpr size_t TX_BUFFER_DEFAULT_LENGTH = 32;
 
-// Default buffers for the one and only Wire object
+#if WIRE_INTERFACES_COUNT > 0
+// Default buffers for the Wire object
 namespace WireBuffers {
   __attribute__((weak)) SET_BUFFERS_FOR_BOTH(RX_BUFFER_DEFAULT_LENGTH, TX_BUFFER_DEFAULT_LENGTH);
 } // namespace Twi
+#endif
+
+#if WIRE_INTERFACES_COUNT > 1
+// Default buffers for the Wire1 object
+namespace Wire1Buffers {
+  __attribute__((weak)) SET_BUFFERS_FOR_BOTH(RX_BUFFER_DEFAULT_LENGTH, TX_BUFFER_DEFAULT_LENGTH);
+} // namespace Twi
+#endif
