@@ -21,14 +21,14 @@ constexpr size_t TRANSMIT_BUFFER_SIZE = 0;  // There is no transmit in this sket
 #if not USE_WIRE1
 
 SET_WIRE_BUFFERS(RECEIVE_BUFFER_SIZE, TRANSMIT_BUFFER_SIZE,
-    true /* master buffers needed */, false /* no slave buffers needed */ );
+    false /* no master buffers needed */, true /* slave buffers needed */ );
 
 void setup() {
   Wire.begin(8);                // join I2C bus with address #8
   Wire.onReceive(receiveEvent); // register event
   Serial.begin(9600);           // start serial for output
 
-  // This is just for curiosity and can be removed
+  // This is just for curiosity and could be removed
   printWireBuffersCapacity(Serial);
 }
 
@@ -63,14 +63,14 @@ void printWireBuffersCapacity(Stream& stream) {
 #else
 
 SET_WIRE1_BUFFERS(RECEIVE_BUFFER_SIZE, TRANSMIT_BUFFER_SIZE,
-    true /* master buffers needed */, false /* no slave buffers needed */ );
+    false /* no master buffers needed */, true /* slave buffers needed */ );
 
 void setup() {
   Wire1.begin(8);                // join I2C bus with address #8
   Wire1.onReceive(receiveEvent); // register event
   Serial.begin(9600);           // start serial for output
 
-  // This is just for curiosity and can be removed
+  // This is just for curiosity and could be removed
   printWire1BuffersCapacity(Serial);
 }
 
