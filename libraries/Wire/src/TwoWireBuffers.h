@@ -26,6 +26,7 @@
 
 #include <stdint.h>
 #include <stddef.h>
+#include <Wire.h>
 
 namespace TwoWireBuffers {
 
@@ -51,13 +52,13 @@ public:
 class Interface {
 public:
   virtual uint8_t* rxWireBuffer() = 0;
-  virtual size_t rxWireBufferCapacity() = 0;
+  virtual size_t rxWireBufferCapacity()const = 0;
 
   virtual uint8_t* txWireBuffer() = 0;
-  virtual size_t txWireBufferCapacity() = 0;
+  virtual size_t txWireBufferCapacity()const = 0;
 
   virtual uint8_t* srvWireBuffer() = 0;
-  virtual size_t srvWireBufferCapacity() = 0;
+  virtual size_t srvWireBufferCapacity()const = 0;
 };
 
 /* Template class implementing Interface with template parameter
@@ -79,29 +80,41 @@ class Impl : public Interface {
 
 public:
   virtual uint8_t* rxWireBuffer() override {return mRxWireBuffer.storage();}
-  virtual size_t rxWireBufferCapacity() override {return mRxWireBuffer.capacity();}
+  virtual size_t rxWireBufferCapacity()const override {return mRxWireBuffer.capacity();}
 
   virtual uint8_t* txWireBuffer() override {return mTxWireBuffer.storage();}
-  virtual size_t txWireBufferCapacity() override {return mTxWireBuffer.capacity();}
+  virtual size_t txWireBufferCapacity()const override {return mTxWireBuffer.capacity();}
 
   virtual uint8_t* srvWireBuffer() override {return mSrvWireBuffer.storage();}
-  virtual size_t srvWireBufferCapacity() override {return mSrvWireBuffer.capacity();}
+  virtual size_t srvWireBufferCapacity()const override {return mSrvWireBuffer.capacity();}
 };
 
 } // namespace TwoWireBuffers
 
-#define SET_BUFFERS_FOR_BOTH(RX_BUFFER_CAPACITY, TX_BUFFER_CAPACITY) \
-    TwoWireBuffers::Interface& instance() { \
-      static TwoWireBuffers::Impl<RX_BUFFER_CAPACITY, TX_BUFFER_CAPACITY> instance; \
-      return instance; \
+template<size_t wireNum> struct WireBuffers { // The buffers for the Wire object
+  static TwoWireBuffers::Interface& instance();
+};
+
+#define SET_WIRE_BUFFERS_(wireNum, rxBufferCapacity, txBufferCapacity, enableMaster, enableSlave) \
+    template<> TwoWireBuffers::Interface& WireBuffers<wireNum>::instance() { \
+      static TwoWireBuffers::Impl<rxBufferCapacity, txBufferCapacity> buffers; \
+      return buffers; \
     }
 
-// This macro is just for compatibility reasons with AVR core
-#define SET_BUFFERS_FOR_MASTER_ONLY(RX_BUFFER_CAPACITY, TX_BUFFER_CAPACITY) \
-    SET_BUFFERS_FOR_BOTH(RX_BUFFER_CAPACITY, TX_BUFFER_CAPACITY)
+#define GET_WIRE_BUFFERS_(wireNum) WireBuffers<wireNum>::instance()
 
-// This macro is just for compatibility reasons with AVR core
-#define SET_BUFFERS_FOR_SLAVE_ONLY(RX_BUFFER_CAPACITY, TX_BUFFER_CAPACITY) \
-    SET_BUFFERS_FOR_BOTH(RX_BUFFER_CAPACITY, TX_BUFFER_CAPACITY)
+#if WIRE_INTERFACES_COUNT > 0
+  #define SET_WIRE_BUFFERS(rxBufferCapacity, txBufferCapacity, enableMaster, enableSlave) \
+    SET_WIRE_BUFFERS_(0, rxBufferCapacity, txBufferCapacity, enableMaster, enableSlave)
+
+  #define GET_WIRE_BUFFERS() GET_WIRE_BUFFERS_(0)
+#endif
+
+#if WIRE_INTERFACES_COUNT > 1
+  #define SET_WIRE1_BUFFERS(rxBufferCapacity, txBufferCapacity, enableMaster, enableSlave) \
+     SET_WIRE_BUFFERS_(1, rxBufferCapacity, txBufferCapacity, enableMaster, enableSlave)
+
+  #define GET_WIRE1_BUFFERS() GET_WIRE_BUFFERS_(1)
+#endif
 
 #endif /* TwiBuffers_h */

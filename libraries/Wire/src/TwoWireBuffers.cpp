@@ -25,14 +25,16 @@ constexpr size_t TX_BUFFER_DEFAULT_LENGTH = 32;
 
 #if WIRE_INTERFACES_COUNT > 0
 // Default buffers for the Wire object
-namespace WireBuffers {
-  __attribute__((weak)) SET_BUFFERS_FOR_BOTH(RX_BUFFER_DEFAULT_LENGTH, TX_BUFFER_DEFAULT_LENGTH);
-} // namespace Twi
+template<> __attribute__((weak)) TwoWireBuffers::Interface& WireBuffers<0>::instance() { \
+  static TwoWireBuffers::Impl<RX_BUFFER_DEFAULT_LENGTH, TX_BUFFER_DEFAULT_LENGTH> buffers; \
+  return buffers; \
+}
 #endif
 
 #if WIRE_INTERFACES_COUNT > 1
 // Default buffers for the Wire1 object
-namespace Wire1Buffers {
-  __attribute__((weak)) SET_BUFFERS_FOR_BOTH(RX_BUFFER_DEFAULT_LENGTH, TX_BUFFER_DEFAULT_LENGTH);
-} // namespace Twi
+template<> __attribute__((weak)) TwoWireBuffers::Interface& WireBuffers<1>::instance() { \
+  static TwoWireBuffers::Impl<RX_BUFFER_DEFAULT_LENGTH, TX_BUFFER_DEFAULT_LENGTH> buffers; \
+  return buffers; \
+}
 #endif

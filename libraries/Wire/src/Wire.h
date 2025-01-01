@@ -140,12 +140,10 @@ private:
 
 #if WIRE_INTERFACES_COUNT > 0
 // The buffers for the Wire object
-namespace WireBuffers {extern TwoWireBuffers::Interface& instance();}
 extern TwoWire Wire;
 #endif
 #if WIRE_INTERFACES_COUNT > 1
 // The buffers for the Wire1 object
-namespace Wire1Buffers {extern TwoWireBuffers::Interface& instance();}
 extern TwoWire Wire1;
 #endif
 
