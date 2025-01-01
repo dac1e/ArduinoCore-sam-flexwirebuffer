@@ -17,7 +17,7 @@ void setup()
   Wire.begin(); // join i2c bus (address optional for master)
 }
 
-byte x = 0;
+static byte x = 0;
 
 void loop()
 {

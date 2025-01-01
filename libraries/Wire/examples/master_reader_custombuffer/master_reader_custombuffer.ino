@@ -11,31 +11,27 @@
 
 #include <Wire.h>
 #include <TwoWireBuffers.h>
+#include "Arduino.h"
+
+#define USE_WIRE1 false // Set to true for using Wire1
 
 // request 6 bytes from slave device #8
-size_t constexpr REQUESTED_BYTE_COUNT = 6;
+constexpr size_t REQUESTED_BYTE_COUNT = 6;
 
-/**** Begin Customize buffers ****/
-// Note: If you spell namespace 'WireBuffers' wrongly, all buffer
-// sizes of the 'Wire' object stay at default (32 bytes).
-namespace WireBuffers {
-  size_t constexpr RECEIVE_BUFFER_SIZE  = REQUESTED_BYTE_COUNT;
-  size_t constexpr TRANSMIT_BUFFER_SIZE = 0; // There is no transmit in this sketch.
-  // We operate as a master only, so we use the macro that will set slave buffers to zero.
-  SET_BUFFERS_FOR_MASTER_ONLY(RECEIVE_BUFFER_SIZE, TRANSMIT_BUFFER_SIZE);
-}
-/**** End Customize buffers ******/
+constexpr size_t RECEIVE_BUFFER_SIZE  = REQUESTED_BYTE_COUNT;
+constexpr size_t TRANSMIT_BUFFER_SIZE = 0; // There is no transmit in this sketch.
 
-// This is just for curiosity.
-// Set to false if you don't want to see actual buffer sizes on serial monitor.
-#define VERBOSE true
+#if not USE_WIRE1
+
+SET_WIRE_BUFFERS(RECEIVE_BUFFER_SIZE, TRANSMIT_BUFFER_SIZE,
+    true /* master buffers needed */, false /* no slave buffers needed */ );
 
 void setup() {
   Wire.begin();        // join I2C bus (address optional for master)
   Serial.begin(9600);  // start serial for output
-#if VERBOSE
-  printWireBuffers();
-#endif
+
+  // This is just for curiosity and can be removed
+  printWireBuffersCapacity(Serial);
 }
 
 void loop() {
@@ -50,16 +46,55 @@ void loop() {
   delay(500);
 }
 
-#if VERBOSE
-void printWireBuffers() {
-  delay(100);
+void printWireBuffersCapacity(Stream& stream) {
+  const auto& buffers = GET_WIRE_BUFFERS();
+
+  stream.print("Wire transmit buffer size is ");
+  stream.println(buffers.txWireBufferCapacity());
+
+  stream.print("Wire receive buffer size is ");
+  stream.println(buffers.rxWireBufferCapacity());
+
+  stream.print("Wire service buffer size is ");
+  stream.println(buffers.srvWireBufferCapacity());
+}
+
+#else
+
+SET_WIRE1_BUFFERS(RECEIVE_BUFFER_SIZE, TRANSMIT_BUFFER_SIZE,
+    true /* master buffers needed */, false /* no slave buffers needed */ );
+
+void setup() {
+  Wire1.begin();        // join I2C bus (address optional for master)
+  Serial.begin(9600);  // start serial for output
+
+  // This is just for curiosity and can be removed
+  printWire1BuffersCapacity(Serial);
+}
+
+void loop() {
+  Wire1.requestFrom(8, REQUESTED_BYTE_COUNT);
+
+  while (Wire1.available()) { // slave may send less than requested
+    char c = Wire1.read(); // receive a byte as character
+    Serial.print(c);         // print the character
+  }
   Serial.println();
-  Serial.print("Wire transmit buffer size is ");
-  Serial.println(Wire.txBufferCapacity());
-  Serial.print("Wire receive buffer size is ");
-  Serial.println(Wire.rxBufferCapacity());
-  Serial.print("Wire service buffer size is ");
-  Serial.println(Wire.srvBufferCapacity());
+
   delay(500);
 }
+
+void printWire1BuffersCapacity(Stream& stream) {
+  const auto& buffers = GET_WIRE1_BUFFERS();
+
+  stream.print("Wire1 transmit buffer size is ");
+  stream.println(buffers.txWireBufferCapacity());
+
+  stream.print("Wire1 receive buffer size is ");
+  stream.println(buffers.rxWireBufferCapacity());
+
+  stream.print("Wire1 service buffer size is ");
+  stream.println(buffers.srvWireBufferCapacity());
+}
+
 #endif

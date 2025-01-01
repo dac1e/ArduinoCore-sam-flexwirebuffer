@@ -403,7 +403,7 @@ static void Wire_Deinit(void) {
 	// and pullups were not enabled
 }
 
-TwoWire Wire = TwoWire(WireBuffers::instance(), WIRE_INTERFACE, Wire_Init, Wire_Deinit);
+TwoWire Wire = TwoWire(WireBuffers<0>::instance(), WIRE_INTERFACE, Wire_Init, Wire_Deinit);
 
 void WIRE_ISR_HANDLER(void) {
 	Wire.onService();
@@ -441,7 +441,7 @@ static void Wire1_Deinit(void) {
 	// and pullups were not enabled
 }
 
-TwoWire Wire1 = TwoWire(Wire1Buffers::instance(), WIRE1_INTERFACE, Wire1_Init, Wire1_Deinit);
+TwoWire Wire1 = TwoWire(WireBuffers<1>::instance(), WIRE1_INTERFACE, Wire1_Init, Wire1_Deinit);
 
 void WIRE1_ISR_HANDLER(void) {
 	Wire1.onService();
