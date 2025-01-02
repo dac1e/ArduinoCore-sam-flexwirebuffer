@@ -67,7 +67,7 @@ template<
   size_t TX_CAPACITY  // Transmit buffer size. May be zero, if only receiving data is needed
   >
 class Impl : public Interface {
-  // Service buffer is neede for transmit and receive.
+  // Service buffer is needed for transmit and receive.
   static constexpr size_t SRV_CAPACITY =
       RX_CAPACITY > TX_CAPACITY ? RX_CAPACITY : TX_CAPACITY;
 
