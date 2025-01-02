@@ -4,8 +4,8 @@
 // with 2 Wire interfaces (like Arduino Due).
 // Uses the option of customizing the buffers.
 //
-// Wire reads data from an I2C/TWI slave device
-// Wire1 sends data as an I2C/TWI slave device
+// Wire data to an I2C/TWI slave device
+// Wire1 receives data as an I2C/TWI slave device
 
 // Created 02 Jan 2025
 
@@ -18,17 +18,17 @@
 
 #if WIRE_INTERFACES_COUNT > 1
 
-static const char text[] = "hello "; // respond with message of 6 bytes
+static const char text[] = "You really won't believe it, but x is ";
 
-// Wire is the master reader
-constexpr size_t M_RECEIVE_BUFFER_SIZE  = sizeof(text)-1; // Don't need a byte for the \0
-constexpr size_t M_TRANSMIT_BUFFER_SIZE = 0; // There is no transmit in this sketch.
+// Wire is the master writer
+constexpr size_t M_RECEIVE_BUFFER_SIZE  = 0;  // There is no receive in this sketch.
+constexpr size_t M_TRANSMIT_BUFFER_SIZE = 42; // Enhance the buffer to 42 characters.
 SET_WIRE_BUFFERS(M_RECEIVE_BUFFER_SIZE, M_TRANSMIT_BUFFER_SIZE,
     true /* master buffers needed */, false /* no slave buffers needed */ );
 
-// Wire1 is the slave sender
-constexpr size_t S_RECEIVE_BUFFER_SIZE  = 0; // There is no receive in this sketch.
-constexpr size_t S_TRANSMIT_BUFFER_SIZE = sizeof(text)-1; // Don't need a byte for the \0
+// Wire1 is the slave receiver
+constexpr size_t S_RECEIVE_BUFFER_SIZE  = 42; // Be able receive up to 42 characters in one message.
+constexpr size_t S_TRANSMIT_BUFFER_SIZE = 0;  // There is no transmit in this sketch.
 SET_WIRE1_BUFFERS(S_RECEIVE_BUFFER_SIZE, S_TRANSMIT_BUFFER_SIZE,
     false /* no master buffers needed */, true /* slave buffers needed */ );
 
@@ -36,33 +36,41 @@ void setup() {
   Serial.begin(9600);            // start serial for output
   Wire.begin();                  // master joins I2C bus (address optional for master)
   Wire1.begin(8);                // slave joins I2C bus with address #8
-  Wire1.onRequest(requestEvent); // register slave event
+  Wire1.onReceive(receiveEvent); // register event
 
   // This is just for curiosity and could be removed
   printWireBuffersCapacity(Serial);
   printWire1BuffersCapacity(Serial);
 }
 
+static byte x = 0;
+
 void loop() {
-  Wire.requestFrom(8, M_RECEIVE_BUFFER_SIZE);
+  Wire.beginTransmission(8); // transmit to device #8
+  Wire.write(text);          // sends multiple bytes
+  Wire.write(x);             // sends one byte
+  Wire.endTransmission();    // stop transmitting
 
-  while (Wire.available()) {
-    const char c = Wire.read(); // receive a byte as character
-    Serial.print(c);            // print the character
-  }
-  Serial.println();
-
+  x++;
   delay(500);
 }
 
-// function that executes whenever data is requested by master
+// function that executes whenever data is received from master
 // this function is registered as an event, see setup()
-void requestEvent() {
-  Wire1.write(text);
-  // as expected by master
+//
+// Hint: This function is called within an interrupt context.
+// That means, that there must be enough space in the Serial output
+// buffer for the characters to be printed. Otherwise the
+// Serial.print() call will lock up.
+void receiveEvent(int howMany) {
+  while (1 < Wire1.available()) { // loop through all but the last
+    const char c = Wire1.read();  // receive byte as a character
+    Serial.print(c);              // print the character
+  }
+  const int x = Wire1.read();     // receive byte as an integer
+  Serial.println(x);              // print the integer
 }
 
-// print Wire buffer sizes
 void printWireBuffersCapacity(Stream& stream) {
   const auto& buffers = GET_WIRE_BUFFERS();
 
@@ -74,11 +82,11 @@ void printWireBuffersCapacity(Stream& stream) {
 
   stream.print("Wire service buffer size is ");
   stream.println(buffers.srvWireBufferCapacity());
+  delay(250); // Give time to finalize the print out
 }
 
-// print Wire1 buffer sizes
 void printWire1BuffersCapacity(Stream& stream) {
-  const auto& buffers = GET_WIRE_BUFFERS();
+  const auto& buffers = GET_WIRE1_BUFFERS();
 
   stream.print("Wire1 transmit buffer size is ");
   stream.println(buffers.txWireBufferCapacity());
@@ -88,6 +96,7 @@ void printWire1BuffersCapacity(Stream& stream) {
 
   stream.print("Wire1 service buffer size is ");
   stream.println(buffers.srvWireBufferCapacity());
+  delay(250); // Give time to free up Serial output buffer.
 }
 
 #endif

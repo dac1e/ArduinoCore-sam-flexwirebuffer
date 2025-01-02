@@ -26,6 +26,11 @@ void loop()
 
 // function that executes whenever data is received from master
 // this function is registered as an event, see setup()
+//
+// Hint: This function is called within an interrupt context.
+// That means, that there must be enough space in the Serial output
+// buffer for the characters to be printed. Otherwise the
+// Serial.print() call will lock up.
 void receiveEvent(int howMany)
 {
   while(1 < Wire.available()) // loop through all but the last

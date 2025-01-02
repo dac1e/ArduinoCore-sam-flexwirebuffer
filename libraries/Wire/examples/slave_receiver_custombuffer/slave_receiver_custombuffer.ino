@@ -38,13 +38,18 @@ void loop() {
 
 // function that executes whenever data is received from master
 // this function is registered as an event, see setup()
+//
+// Hint: This function is called within an interrupt context.
+// That means, that there must be enough space in the Serial output
+// buffer for the characters to be printed. Otherwise the
+// Serial.print() call will lock up.
 void receiveEvent(int howMany) {
   while (1 < Wire.available()) { // loop through all but the last
-    const char c = Wire.read(); // receive byte as a character
-    Serial.print(c);         // print the character
+    const char c = Wire.read();  // receive byte as a character
+    Serial.print(c);             // print the character
   }
-  const int x = Wire.read();    // receive byte as an integer
-  Serial.println(x);         // print the integer
+  const int x = Wire.read();     // receive byte as an integer
+  Serial.println(x);             // print the integer
 }
 
 void printWireBuffersCapacity(Stream& stream) {
@@ -58,6 +63,7 @@ void printWireBuffersCapacity(Stream& stream) {
 
   stream.print("Wire service buffer size is ");
   stream.println(buffers.srvWireBufferCapacity());
+  delay(250); // Give time to free up Serial output buffer.
 }
 
 #else
@@ -68,7 +74,7 @@ SET_WIRE1_BUFFERS(RECEIVE_BUFFER_SIZE, TRANSMIT_BUFFER_SIZE,
 void setup() {
   Wire1.begin(8);                // join I2C bus with address #8
   Wire1.onReceive(receiveEvent); // register event
-  Serial.begin(9600);           // start serial for output
+  Serial.begin(9600);            // start serial for output
 
   // This is just for curiosity and could be removed
   printWire1BuffersCapacity(Serial);
@@ -80,13 +86,18 @@ void loop() {
 
 // function that executes whenever data is received from master
 // this function is registered as an event, see setup()
+//
+// Hint: This function is called within an interrupt context.
+// That means, that there must be enough space in the Serial output
+// buffer for the characters to be printed. Otherwise the
+// Serial.print() call will lock up.
 void receiveEvent(int howMany) {
   while (1 < Wire1.available()) { // loop through all but the last
-    const char c = Wire1.read(); // receive byte as a character
-    Serial.print(c);         // print the character
+    const char c = Wire1.read();  // receive byte as a character
+    Serial.print(c);              // print the character
   }
-  const int x = Wire1.read();    // receive byte as an integer
-  Serial.println(x);         // print the integer
+  const int x = Wire1.read();     // receive byte as an integer
+  Serial.println(x);              // print the integer
 }
 
 void printWire1BuffersCapacity(Stream& stream) {
@@ -100,6 +111,7 @@ void printWire1BuffersCapacity(Stream& stream) {
 
   stream.print("Wire1 service buffer size is ");
   stream.println(buffers.srvWireBufferCapacity());
+  delay(250); // Give time to free up Serial output buffer.
 }
 
 #endif
