@@ -105,17 +105,17 @@ template<size_t wireNum> struct WireBuffers { // The buffers for the Wire object
 #define GET_WIRE_BUFFERS_(wireNum) WireBuffers<wireNum>::instance()
 
 #if WIRE_INTERFACES_COUNT > 0
-  #define SET_WIRE_BUFFERS(rxBufferCapacity, txBufferCapacity, enableMaster, enableSlave) \
+  #define SET_Wire_BUFFERS(rxBufferCapacity, txBufferCapacity, enableMaster, enableSlave) \
     SET_WIRE_BUFFERS_(0, rxBufferCapacity, txBufferCapacity, enableMaster, enableSlave)
 
-  #define GET_WIRE_BUFFERS() GET_WIRE_BUFFERS_(0)
+  #define GET_Wire_BUFFERS() GET_WIRE_BUFFERS_(0)
 #endif
 
 #if WIRE_INTERFACES_COUNT > 1
-  #define SET_WIRE1_BUFFERS(rxBufferCapacity, txBufferCapacity, enableMaster, enableSlave) \
+  #define SET_Wire1_BUFFERS(rxBufferCapacity, txBufferCapacity, enableMaster, enableSlave) \
      SET_WIRE_BUFFERS_(1, rxBufferCapacity, txBufferCapacity, enableMaster, enableSlave)
 
-  #define GET_WIRE1_BUFFERS() GET_WIRE_BUFFERS_(1)
+  #define GET_Wire1_BUFFERS() GET_WIRE_BUFFERS_(1)
 #endif
 
 #endif /* TwiBuffers_h */

@@ -23,13 +23,13 @@ static const char text[] = "You really won't believe it, but x is ";
 // Wire is the master writer
 constexpr size_t M_RECEIVE_BUFFER_SIZE  = 0;  // There is no receive in this sketch.
 constexpr size_t M_TRANSMIT_BUFFER_SIZE = 42; // Enhance the buffer to 42 characters.
-SET_WIRE_BUFFERS(M_RECEIVE_BUFFER_SIZE, M_TRANSMIT_BUFFER_SIZE,
+SET_Wire_BUFFERS(M_RECEIVE_BUFFER_SIZE, M_TRANSMIT_BUFFER_SIZE,
     true /* master buffers needed */, false /* no slave buffers needed */ );
 
 // Wire1 is the slave receiver
 constexpr size_t S_RECEIVE_BUFFER_SIZE  = 42; // Be able receive up to 42 characters in one message.
 constexpr size_t S_TRANSMIT_BUFFER_SIZE = 0;  // There is no transmit in this sketch.
-SET_WIRE1_BUFFERS(S_RECEIVE_BUFFER_SIZE, S_TRANSMIT_BUFFER_SIZE,
+SET_Wire1_BUFFERS(S_RECEIVE_BUFFER_SIZE, S_TRANSMIT_BUFFER_SIZE,
     false /* no master buffers needed */, true /* slave buffers needed */ );
 
 void setup() {
@@ -72,7 +72,7 @@ void receiveEvent(int howMany) {
 }
 
 void printWireBuffersCapacity(Stream& stream) {
-  const auto& buffers = GET_WIRE_BUFFERS();
+  const auto& buffers = GET_Wire_BUFFERS();
 
   stream.print("Wire transmit buffer size is ");
   stream.println(buffers.txWireBufferCapacity());
@@ -86,7 +86,7 @@ void printWireBuffersCapacity(Stream& stream) {
 }
 
 void printWire1BuffersCapacity(Stream& stream) {
-  const auto& buffers = GET_WIRE1_BUFFERS();
+  const auto& buffers = GET_Wire1_BUFFERS();
 
   stream.print("Wire1 transmit buffer size is ");
   stream.println(buffers.txWireBufferCapacity());

@@ -22,7 +22,7 @@ constexpr size_t TRANSMIT_BUFFER_SIZE = sizeof(text)-1; // Don't need a byte for
 
 #if not USE_WIRE1
 
-SET_WIRE_BUFFERS(RECEIVE_BUFFER_SIZE, TRANSMIT_BUFFER_SIZE,
+SET_Wire_BUFFERS(RECEIVE_BUFFER_SIZE, TRANSMIT_BUFFER_SIZE,
     false /* no master buffers needed */, true /* slave buffers needed */ );
 
 void setup() {
@@ -46,7 +46,7 @@ void requestEvent() {
 }
 
 void printWireBuffersCapacity(Stream& stream) {
-  const auto& buffers = GET_WIRE_BUFFERS();
+  const auto& buffers = GET_Wire_BUFFERS();
 
   stream.print("Wire transmit buffer size is ");
   stream.println(buffers.txWireBufferCapacity());
@@ -60,7 +60,7 @@ void printWireBuffersCapacity(Stream& stream) {
 
 #else
 
-SET_WIRE1_BUFFERS(RECEIVE_BUFFER_SIZE, TRANSMIT_BUFFER_SIZE,
+SET_Wire1_BUFFERS(RECEIVE_BUFFER_SIZE, TRANSMIT_BUFFER_SIZE,
     false /* no master buffers needed */, true /* slave buffers needed */ );
 
 void setup() {
@@ -84,7 +84,7 @@ void requestEvent() {
 }
 
 void printWire1BuffersCapacity(Stream& stream) {
-  const auto& buffers = GET_WIRE1_BUFFERS();
+  const auto& buffers = GET_Wire1_BUFFERS();
 
   stream.print("Wire1 transmit buffer size is ");
   stream.println(buffers.txWireBufferCapacity());
