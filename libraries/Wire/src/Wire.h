@@ -1,5 +1,5 @@
 /*
- * TwoWire.h - TWI/I2C library for Arduino Due
+ * Wire.h - TWI/I2C library for Arduino Due
  * Copyright (c) 2011 Cristian Maglie <c.maglie@arduino.cc>
  * All rights reserved.
  *
