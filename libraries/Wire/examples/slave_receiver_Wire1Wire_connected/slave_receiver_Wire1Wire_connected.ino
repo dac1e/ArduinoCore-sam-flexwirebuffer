@@ -16,7 +16,7 @@
 #include <TwoWireBuffers.h>
 #include "Arduino.h"
 
-#if WIRE_INTERFACES_COUNT > 1
+static_assert(WIRE_INTERFACES_COUNT > 1, "You need two I2C interfaces on the Arduino board to run this sketch");
 
 static const char text[] = "You really won't believe it, but x is ";
 
@@ -98,5 +98,3 @@ void printWire1BuffersCapacity(Stream& stream) {
   stream.println(buffers.srvWireBufferCapacity());
   delay(250); // Give time to free up Serial output buffer.
 }
-
-#endif

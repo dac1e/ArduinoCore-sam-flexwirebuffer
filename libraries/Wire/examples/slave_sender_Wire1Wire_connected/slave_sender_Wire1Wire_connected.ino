@@ -16,7 +16,7 @@
 #include <TwoWireBuffers.h>
 #include "Arduino.h"
 
-#if WIRE_INTERFACES_COUNT > 1
+static_assert(WIRE_INTERFACES_COUNT > 1, "You need two I2C interfaces on the Arduino board to run this sketch");
 
 static const char text[] = "hello "; // respond with message of 6 bytes
 
@@ -89,5 +89,3 @@ void printWire1BuffersCapacity(Stream& stream) {
   stream.print("Wire1 service buffer size is ");
   stream.println(buffers.srvWireBufferCapacity());
 }
-
-#endif
