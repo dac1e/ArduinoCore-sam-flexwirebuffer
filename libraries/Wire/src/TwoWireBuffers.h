@@ -93,6 +93,9 @@ template<size_t wireNum> struct WireBuffers { // The buffers for the Wire object
   static TwoWireBuffers::Interface& instance();
 };
 
+// Note: enableMaster and enableSlave don't have any impact on sam architecture, but they
+//   are present to keep the macro compatible with the one on the avr architecture, where
+//   it makes a difference in regard to memory consumption.
 #define SET_WIRE_BUFFERS_(wireNum, rxBufferCapacity, txBufferCapacity, enableMaster, enableSlave) \
     template<> TwoWireBuffers::Interface& WireBuffers<wireNum>::instance() { \
       static TwoWireBuffers::Impl<rxBufferCapacity, txBufferCapacity> buffers; \

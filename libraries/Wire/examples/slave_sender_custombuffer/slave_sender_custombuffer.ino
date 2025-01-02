@@ -84,7 +84,7 @@ void requestEvent() {
 }
 
 void printWire1BuffersCapacity(Stream& stream) {
-  const auto& buffers = GET_WIRE_BUFFERS();
+  const auto& buffers = GET_WIRE1_BUFFERS();
 
   stream.print("Wire1 transmit buffer size is ");
   stream.println(buffers.txWireBufferCapacity());
