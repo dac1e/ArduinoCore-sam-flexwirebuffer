@@ -142,7 +142,7 @@ void TwoWire::begin(uint8_t address) {
 }
 
 void TwoWire::begin(int address) {
-	begin((uint8_t) address);
+	begin(static_cast<uint8_t>(address));
 }
 
 void TwoWire::end(void) {
@@ -187,19 +187,19 @@ uint8_t TwoWire::requestFrom(uint8_t address, uint8_t quantity, uint32_t iaddres
 }
 
 uint8_t TwoWire::requestFrom(uint8_t address, uint8_t quantity, uint8_t sendStop) {
-	return requestFrom((uint8_t) address, (uint8_t) quantity, (uint32_t) 0, (uint8_t) 0, (uint8_t) sendStop);
+	return requestFrom(static_cast<uint8_t>(address), static_cast<uint8_t>(quantity), static_cast<uint32_t>(0), static_cast<uint8_t>(0), static_cast<uint8_t>(sendStop));
 }
 
 uint8_t TwoWire::requestFrom(uint8_t address, uint8_t quantity) {
-	return requestFrom((uint8_t) address, (uint8_t) quantity, (uint8_t) true);
+	return requestFrom(static_cast<uint8_t>(address), static_cast<uint8_t>(quantity), static_cast<uint8_t>(true));
 }
 
 uint8_t TwoWire::requestFrom(int address, int quantity) {
-	return requestFrom((uint8_t) address, (uint8_t) quantity, (uint8_t) true);
+	return requestFrom(static_cast<uint8_t>(address), static_cast<uint8_t>(quantity), static_cast<uint8_t>(true));
 }
 
 uint8_t TwoWire::requestFrom(int address, int quantity, int sendStop) {
-	return requestFrom((uint8_t) address, (uint8_t) quantity, (uint8_t) sendStop);
+	return requestFrom(static_cast<uint8_t>(address), static_cast<uint8_t>(quantity), static_cast<uint8_t>(sendStop));
 }
 
 void TwoWire::beginTransmission(uint8_t address) {
@@ -211,7 +211,7 @@ void TwoWire::beginTransmission(uint8_t address) {
 }
 
 void TwoWire::beginTransmission(int address) {
-	beginTransmission((uint8_t) address);
+	beginTransmission(static_cast<uint8_t>(address));
 }
 
 //
@@ -346,7 +346,7 @@ void TwoWire::onService(void) {
 				onRequestCallback();
 			else
 				// create a default 1-byte response
-				write((uint8_t) 0);
+				write(static_cast<uint8_t>(0));
 		}
 	}
 
@@ -355,7 +355,7 @@ void TwoWire::onService(void) {
 			// Copy data into rxBuffer
 			// (allows to receive another packet while the
 			// user program reads actual data)
-			for (uint8_t i = 0; i < srvBufferLength; ++i)
+			for (size_t i = 0; i < srvBufferLength; ++i)
 				rxBuffer()[i] = srvBuffer()[i];
 			rxBufferIndex = 0;
 			rxBufferLength = srvBufferLength;

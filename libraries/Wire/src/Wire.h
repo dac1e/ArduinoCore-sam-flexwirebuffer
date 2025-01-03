@@ -52,26 +52,26 @@ public:
 	uint8_t requestFrom(uint8_t, uint8_t, uint32_t, uint8_t, uint8_t);
 	uint8_t requestFrom(int, int);
     uint8_t requestFrom(int, int, int);
-	virtual size_t write(uint8_t);
-	virtual size_t write(const uint8_t *, size_t);
-	virtual int available(void);
-	virtual int read(void);
-	virtual int peek(void);
-	virtual void flush(void);
+	size_t write(uint8_t) override;
+	size_t write(const uint8_t *, size_t) override;
+	int available(void) override;
+	int read(void) override;
+	int peek(void) override;
+	void flush(void) override;
 	void onReceive(void(*)(int));
 	void onRequest(void(*)(void));
 
-    inline size_t write(unsigned long n) { return write((uint8_t)n); }
-    inline size_t write(long n) { return write((uint8_t)n); }
-    inline size_t write(unsigned int n) { return write((uint8_t)n); }
-    inline size_t write(int n) { return write((uint8_t)n); }
+    inline size_t write(unsigned long n) { return write(static_cast<uint8_t>(n)); }
+    inline size_t write(long n) { return write(static_cast<uint8_t>(n)); }
+    inline size_t write(unsigned int n) { return write(static_cast<uint8_t>(n)); }
+    inline size_t write(int n) { return write(static_cast<uint8_t>(n)); }
     using Print::write;
 
 	void onService(void);
 
 private:
+	// Container of rxBuffer, txBuffer and srvBuffer
 	const TwoWireBuffer::Buffers& buffers;
-
 
 	// RX Buffer
   inline uint8_t* rxBuffer() const;
@@ -93,13 +93,13 @@ private:
 	void (*onReceiveCallback)(int);
 
 	// Called before initialization
-	void (*onBeginCallback)(void);
+	void (*const onBeginCallback)(void);
 
 	// Called after deinitialization
-	void (*onEndCallback)(void);
+	void (*const onEndCallback)(void);
 
 	// TWI instance
-	Twi *twi;
+	Twi * const twi;
 
 	// TWI state
 	enum TwoWireStatus {
@@ -114,12 +114,12 @@ private:
 	TwoWireStatus status;
 
 	// TWI clock frequency
-	static const uint32_t TWI_CLOCK = 100000;
+	static constexpr uint32_t TWI_CLOCK = 100000;
 	uint32_t twiClock;
 
 	// Timeouts (
-	static const uint32_t RECV_TIMEOUT = 100000;
-	static const uint32_t XMIT_TIMEOUT = 100000;
+	static constexpr uint32_t RECV_TIMEOUT = 100000;
+	static constexpr uint32_t XMIT_TIMEOUT = 100000;
 };
 
 #if WIRE_INTERFACES_COUNT > 0
