@@ -23,18 +23,21 @@
 
 // Include Atmel CMSIS driver
 #include <include/twi.h>
-
 #include "Stream.h"
 #include "variant.h"
 
-#define BUFFER_LENGTH 32
+// Forward declaration of TwoWireBuffer::Buffers
+namespace TwoWireBuffer {
+  struct Buffers;
+}
 
  // WIRE_HAS_END means Wire has end()
 #define WIRE_HAS_END 1
 
 class TwoWire : public Stream {
 public:
-	TwoWire(Twi *twi, void(*begin_cb)(void), void(*end_cb)(void));
+	TwoWire(const TwoWireBuffer::Buffers& _buffers,
+	    Twi *twi, void(*begin_cb)(void), void(*end_cb)(void));
 	void begin();
 	void begin(uint8_t);
 	void begin(int);
@@ -67,18 +70,21 @@ public:
 	void onService(void);
 
 private:
+	const TwoWireBuffer::Buffers& buffers;
+
+
 	// RX Buffer
-	uint8_t rxBuffer[BUFFER_LENGTH];
+  inline uint8_t* rxBuffer() const;
 	uint8_t rxBufferIndex;
 	uint8_t rxBufferLength;
 
 	// TX Buffer
+  inline uint8_t* txBuffer() const;
 	uint8_t txAddress;
-	uint8_t txBuffer[BUFFER_LENGTH];
 	uint8_t txBufferLength;
 
 	// Service buffer
-	uint8_t srvBuffer[BUFFER_LENGTH];
+	inline uint8_t* srvBuffer() const;
 	uint8_t srvBufferIndex;
 	uint8_t srvBufferLength;
 
