@@ -186,32 +186,12 @@ uint8_t TwoWire::requestFrom(uint8_t address, uint8_t quantity, uint32_t iaddres
 	return readed;
 }
 
-uint8_t TwoWire::requestFrom(uint8_t address, uint8_t quantity, uint8_t sendStop) {
-	return requestFrom(static_cast<uint8_t>(address), static_cast<uint8_t>(quantity), static_cast<uint32_t>(0), static_cast<uint8_t>(0), static_cast<uint8_t>(sendStop));
-}
-
-uint8_t TwoWire::requestFrom(uint8_t address, uint8_t quantity) {
-	return requestFrom(static_cast<uint8_t>(address), static_cast<uint8_t>(quantity), static_cast<uint8_t>(true));
-}
-
-uint8_t TwoWire::requestFrom(int address, int quantity) {
-	return requestFrom(static_cast<uint8_t>(address), static_cast<uint8_t>(quantity), static_cast<uint8_t>(true));
-}
-
-uint8_t TwoWire::requestFrom(int address, int quantity, int sendStop) {
-	return requestFrom(static_cast<uint8_t>(address), static_cast<uint8_t>(quantity), static_cast<uint8_t>(sendStop));
-}
-
 void TwoWire::beginTransmission(uint8_t address) {
 	status = MASTER_SEND;
 
 	// save address of target and empty buffer
 	txAddress = address;
 	txBufferLength = 0;
-}
-
-void TwoWire::beginTransmission(int address) {
-	beginTransmission(static_cast<uint8_t>(address));
 }
 
 //
