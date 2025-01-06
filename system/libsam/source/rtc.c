@@ -125,6 +125,48 @@ static uint32_t calculate_dwTime( Rtc* pRtc, uint8_t ucHour, uint8_t ucMinute, u
     return dwAmpm | ucSec_bcd | (ucMin_bcd << 8) | (ucHour_bcd<<16) ;
 }
 
+/**
+ * \brief calculate the RTC_CALR bcd format.
+ *
+ * \param wYear  Current year.
+ * \param ucMonth Current month.
+ * \param ucDay   Current day.
+ * \param ucWeek  Day number in current week.
+ *
+ * \return date in 32 bit RTC_CALR bcd format on success, 0xFFFFFFFF on fail
+ */
+static uint32_t calculate_dwDate( Rtc* pRtc, uint16_t wYear, uint8_t ucMonth, uint8_t ucDay, uint8_t ucWeek ) {
+    uint8_t ucCent_bcd ;
+    uint8_t ucYear_bcd ;
+    uint8_t ucMonth_bcd ;
+    uint8_t ucDay_bcd ;
+    uint8_t ucWeek_bcd ;
+
+    ucCent_bcd  = ((wYear/100)%10) | ((wYear/1000)<<4);
+    ucYear_bcd  = (wYear%10) | (((wYear/10)%10)<<4);
+    ucMonth_bcd = ((ucMonth%10) | (ucMonth/10)<<4);
+    ucDay_bcd   = ((ucDay%10) | (ucDay/10)<<4);
+    ucWeek_bcd  = ((ucWeek%10) | (ucWeek/10)<<4);
+
+    /* value over flow */
+    if ( (ucCent_bcd & (uint8_t)(~RTC_CENT_BIT_LEN_MASK)) |
+         (ucYear_bcd & (uint8_t)(~RTC_YEAR_BIT_LEN_MASK)) |
+         (ucMonth_bcd & (uint8_t)(~RTC_MONTH_BIT_LEN_MASK)) |
+         (ucWeek_bcd & (uint8_t)(~RTC_WEEK_BIT_LEN_MASK)) |
+         (ucDay_bcd & (uint8_t)(~RTC_DATE_BIT_LEN_MASK))
+       )
+    {
+        return 0xFFFFFFFF ;
+    }
+
+    /* return date register value */
+    return  (uint32_t)ucCent_bcd |
+            (ucYear_bcd << 8) |
+            (ucMonth_bcd << 16) |
+            (ucWeek_bcd << 21) |
+            (ucDay_bcd << 24);
+}
+
 /*----------------------------------------------------------------------------
  *        Exported functions
  *----------------------------------------------------------------------------*/
@@ -362,44 +404,18 @@ extern void RTC_GetDate( Rtc* pRtc, uint16_t *pwYear, uint8_t *pucMonth, uint8_t
  */
 extern int RTC_SetDate( Rtc* pRtc, uint16_t wYear, uint8_t ucMonth, uint8_t ucDay, uint8_t ucWeek )
 {
-    uint32_t wDate ;
-    uint8_t ucCent_bcd ;
-    uint8_t ucYear_bcd ;
-    uint8_t ucMonth_bcd ;
-    uint8_t ucDay_bcd ;
-    uint8_t ucWeek_bcd ;
-
-    ucCent_bcd  = ((wYear/100)%10) | ((wYear/1000)<<4);
-    ucYear_bcd  = (wYear%10) | (((wYear/10)%10)<<4);
-    ucMonth_bcd = ((ucMonth%10) | (ucMonth/10)<<4);
-    ucDay_bcd   = ((ucDay%10) | (ucDay/10)<<4);
-    ucWeek_bcd  = ((ucWeek%10) | (ucWeek/10)<<4);
-
-    /* value over flow */
-    if ( (ucCent_bcd & (uint8_t)(~RTC_CENT_BIT_LEN_MASK)) |
-         (ucYear_bcd & (uint8_t)(~RTC_YEAR_BIT_LEN_MASK)) |
-         (ucMonth_bcd & (uint8_t)(~RTC_MONTH_BIT_LEN_MASK)) |
-         (ucWeek_bcd & (uint8_t)(~RTC_WEEK_BIT_LEN_MASK)) |
-         (ucDay_bcd & (uint8_t)(~RTC_DATE_BIT_LEN_MASK))
-       )
+    const uint32_t dwDate = calculate_dwDate(pRtc, wYear, ucMonth, ucDay, ucWeek);
+    if ( dwDate == 0xFFFFFFFF )
     {
         return 1 ;
     }
-
-
-    /* Convert values to date register value */
-    wDate = ucCent_bcd |
-            (ucYear_bcd << 8) |
-            (ucMonth_bcd << 16) |
-            (ucWeek_bcd << 21) |
-            (ucDay_bcd << 24);
 
     /* Update calendar register  */
     pRtc->RTC_CR |= RTC_CR_UPDCAL ;
     while ((pRtc->RTC_SR & RTC_SR_ACKUPD) != RTC_SR_ACKUPD) ;
 
     pRtc->RTC_SCCR = RTC_SCCR_ACKCLR;
-    pRtc->RTC_CALR = wDate ;
+    pRtc->RTC_CALR = dwDate ;
     pRtc->RTC_CR &= (uint32_t)(~RTC_CR_UPDCAL) ;
     pRtc->RTC_SCCR |= RTC_SCCR_SECCLR; /* clear SECENV in SCCR */
 
