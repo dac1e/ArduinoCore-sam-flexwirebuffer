@@ -179,7 +179,7 @@ extern int RTC_SetTime( Rtc* pRtc, uint8_t ucHour, uint8_t ucMinute, uint8_t ucS
         return 1 ;
     }
 
-    dwTime = ucSec_bcd | (ucMin_bcd << 8) | (ucHour_bcd<<16) ;
+    dwTime |= ucSec_bcd | (ucMin_bcd << 8) | (ucHour_bcd<<16) ;
 
     pRtc->RTC_CR |= RTC_CR_UPDTIM ;
     while ((pRtc->RTC_SR & RTC_SR_ACKUPD) != RTC_SR_ACKUPD) ;
