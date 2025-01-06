@@ -167,6 +167,42 @@ static uint32_t calculate_dwDate( Rtc* pRtc, uint16_t wYear, uint8_t ucMonth, ui
             (ucDay_bcd << 24);
 }
 
+/**
+ * \brief Convert the RTC_TIMR bcd format to hour, minute and second.
+ *
+ * \param pucHour    If not null, current hour is stored in this variable.
+ * \param pucMinute  If not null, current minute is stored in this variable.
+ * \param pucSecond  If not null, current second is stored in this variable.
+ */
+static void dwTime2time( uint32_t dwTime, uint8_t *pucHour, uint8_t *pucMinute, uint8_t *pucSecond )
+{
+    /* Hour */
+    if ( pucHour )
+    {
+        *pucHour = ((dwTime & 0x00300000) >> 20) * 10
+                 + ((dwTime & 0x000F0000) >> 16);
+
+        if ( (dwTime & RTC_TIMR_AMPM) == RTC_TIMR_AMPM )
+        {
+            *pucHour += 12 ;
+        }
+    }
+
+    /* Minute */
+    if ( pucMinute )
+    {
+        *pucMinute = ((dwTime & 0x00007000) >> 12) * 10
+                   + ((dwTime & 0x00000F00) >> 8);
+    }
+
+    /* Second */
+    if ( pucSecond )
+    {
+        *pucSecond = ((dwTime & 0x00000070) >> 4) * 10
+                   + (dwTime & 0x0000000F);
+    }
+}
+
 /*----------------------------------------------------------------------------
  *        Exported functions
  *----------------------------------------------------------------------------*/
@@ -262,40 +298,14 @@ extern int RTC_SetTime( Rtc* pRtc, uint8_t ucHour, uint8_t ucMinute, uint8_t ucS
  */
 extern void RTC_GetTime( Rtc* pRtc, uint8_t *pucHour, uint8_t *pucMinute, uint8_t *pucSecond )
 {
-    uint32_t dwTime ;
-
     /* Get current RTC time */
-    dwTime = pRtc->RTC_TIMR ;
+    uint32_t dwTime = pRtc->RTC_TIMR ;
     while ( dwTime != pRtc->RTC_TIMR )
     {
         dwTime = pRtc->RTC_TIMR ;
     }
 
-    /* Hour */
-    if ( pucHour )
-    {
-        *pucHour = ((dwTime & 0x00300000) >> 20) * 10
-                 + ((dwTime & 0x000F0000) >> 16);
-
-        if ( (dwTime & RTC_TIMR_AMPM) == RTC_TIMR_AMPM )
-        {
-            *pucHour += 12 ;
-        }
-    }
-
-    /* Minute */
-    if ( pucMinute )
-    {
-        *pucMinute = ((dwTime & 0x00007000) >> 12) * 10
-                   + ((dwTime & 0x00000F00) >> 8);
-    }
-
-    /* Second */
-    if ( pucSecond )
-    {
-        *pucSecond = ((dwTime & 0x00000070) >> 4) * 10
-                   + (dwTime & 0x0000000F);
-    }
+    dwTime2time( dwTime, pucHour, pucMinute, pucSecond ) ;
 }
 
 /**
