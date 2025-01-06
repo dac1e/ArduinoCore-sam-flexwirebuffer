@@ -203,6 +203,44 @@ static void dwTime2time( uint32_t dwTime, uint8_t *pucHour, uint8_t *pucMinute, 
     }
 }
 
+/**
+ * \brief Convert the RTC_CALR bcd format to year, month, day, week.
+ *
+ * \param pYwear  Current year (optional).
+ * \param pucMonth  Current month (optional).
+ * \param pucDay  Current day (optional).
+ * \param pucWeek  Current day in current week (optional).
+ */
+extern void dwDate2date( uint32_t dwDate, uint16_t *pwYear, uint8_t *pucMonth, uint8_t *pucDay, uint8_t *pucWeek )
+{
+    /* Retrieve year */
+    if ( pwYear )
+    {
+        *pwYear = (((dwDate  >> 4) & 0x7) * 1000)
+                 + ((dwDate & 0xF) * 100)
+                 + (((dwDate >> 12) & 0xF) * 10)
+                 + ((dwDate >> 8) & 0xF);
+    }
+
+    /* Retrieve month */
+    if ( pucMonth )
+    {
+        *pucMonth = (((dwDate >> 20) & 1) * 10) + ((dwDate >> 16) & 0xF);
+    }
+
+    /* Retrieve day */
+    if ( pucDay )
+    {
+        *pucDay = (((dwDate >> 28) & 0x3) * 10) + ((dwDate >> 24) & 0xF);
+    }
+
+    /* Retrieve week */
+    if ( pucWeek )
+    {
+        *pucWeek = ((dwDate >> 21) & 0x7);
+    }
+}
+
 /*----------------------------------------------------------------------------
  *        Exported functions
  *----------------------------------------------------------------------------*/
@@ -369,32 +407,7 @@ extern void RTC_GetDate( Rtc* pRtc, uint16_t *pwYear, uint8_t *pucMonth, uint8_t
     }
     while ( dwDate != pRtc->RTC_CALR ) ;
 
-    /* Retrieve year */
-    if ( pwYear )
-    {
-        *pwYear = (((dwDate  >> 4) & 0x7) * 1000)
-                 + ((dwDate & 0xF) * 100)
-                 + (((dwDate >> 12) & 0xF) * 10)
-                 + ((dwDate >> 8) & 0xF);
-    }
-
-    /* Retrieve month */
-    if ( pucMonth )
-    {
-        *pucMonth = (((dwDate >> 20) & 1) * 10) + ((dwDate >> 16) & 0xF);
-    }
-
-    /* Retrieve day */
-    if ( pucDay )
-    {
-        *pucDay = (((dwDate >> 28) & 0x3) * 10) + ((dwDate >> 24) & 0xF);
-    }
-
-    /* Retrieve week */
-    if ( pucWeek )
-    {
-        *pucWeek = ((dwDate >> 21) & 0x7);
-    }
+    dwDate2date( dwDate, pwYear, *pucMonth, *pucDay, *pucWeek ) ;
 }
 
 /**
