@@ -84,6 +84,48 @@
 #include <assert.h>
 
 /*----------------------------------------------------------------------------
+ *        Internal functions
+ *----------------------------------------------------------------------------*/
+ 
+/**
+ * \brief calculate the RTC_TIMR bcd format.
+ *
+ * \param ucHour    Current hour in 12 or 24 hour mode.
+ * \param ucMinute  Current minute.
+ * \param ucSecond  Current second.
+ *
+ * \return time in 32 bit RTC_TIMR bcd format on success, 0xFFFFFFFF on fail
+ */
+static uint32_t calculate_dwTime( Rtc* pRtc, uint8_t ucHour, uint8_t ucMinute, uint8_t ucSecond) {
+    uint32_t dwAmpm=0 ;
+    uint8_t ucHour_bcd ;
+    uint8_t ucMin_bcd ;
+    uint8_t ucSec_bcd ;
+
+    /* if 12-hour mode, set AMPM bit */
+    if ( (pRtc->RTC_MR & RTC_MR_HRMOD) == RTC_MR_HRMOD )
+    {
+        if ( ucHour > 12 )
+        {
+            ucHour -= 12 ;
+            dwAmpm |= RTC_TIMR_AMPM ;
+        }
+    }
+    ucHour_bcd = (ucHour%10)   | ((ucHour/10)<<4) ;
+    ucMin_bcd  = (ucMinute%10) | ((ucMinute/10)<<4) ;
+    ucSec_bcd  = (ucSecond%10) | ((ucSecond/10)<<4) ;
+
+    /* value overflow */
+    if ( (ucHour_bcd & (uint8_t)(~RTC_HOUR_BIT_LEN_MASK)) |
+         (ucMin_bcd & (uint8_t)(~RTC_MIN_BIT_LEN_MASK)) |
+         (ucSec_bcd & (uint8_t)(~RTC_SEC_BIT_LEN_MASK)))
+    {
+        return 0xFFFFFFFF ;
+    }
+    return dwAmpm | ucSec_bcd | (ucMin_bcd << 8) | (ucHour_bcd<<16) ;
+}
+
+/*----------------------------------------------------------------------------
  *        Exported functions
  *----------------------------------------------------------------------------*/
 
@@ -153,33 +195,11 @@ extern void RTC_DisableIt( Rtc* pRtc, uint32_t dwSources )
  */
 extern int RTC_SetTime( Rtc* pRtc, uint8_t ucHour, uint8_t ucMinute, uint8_t ucSecond )
 {
-    uint32_t dwTime=0 ;
-    uint8_t ucHour_bcd ;
-    uint8_t ucMin_bcd ;
-    uint8_t ucSec_bcd ;
-
-    /* if 12-hour mode, set AMPM bit */
-    if ( (pRtc->RTC_MR & RTC_MR_HRMOD) == RTC_MR_HRMOD )
+    const uint32_t dwTime=calculate_dwTime( pRtc, ucHour, ucMinute, ucSecond ) ;
+    if( dwTime == 0xFFFFFFFF )
     {
-        if ( ucHour > 12 )
-        {
-            ucHour -= 12 ;
-            dwTime |= RTC_TIMR_AMPM ;
-        }
+      return 1 ;
     }
-    ucHour_bcd = (ucHour%10)   | ((ucHour/10)<<4) ;
-    ucMin_bcd  = (ucMinute%10) | ((ucMinute/10)<<4) ;
-    ucSec_bcd  = (ucSecond%10) | ((ucSecond/10)<<4) ;
-
-    /* value overflow */
-    if ( (ucHour_bcd & (uint8_t)(~RTC_HOUR_BIT_LEN_MASK)) |
-         (ucMin_bcd & (uint8_t)(~RTC_MIN_BIT_LEN_MASK)) |
-         (ucSec_bcd & (uint8_t)(~RTC_SEC_BIT_LEN_MASK)))
-    {
-        return 1 ;
-    }
-
-    dwTime |= ucSec_bcd | (ucMin_bcd << 8) | (ucHour_bcd<<16) ;
 
     pRtc->RTC_CR |= RTC_CR_UPDTIM ;
     while ((pRtc->RTC_SR & RTC_SR_ACKUPD) != RTC_SR_ACKUPD) ;
