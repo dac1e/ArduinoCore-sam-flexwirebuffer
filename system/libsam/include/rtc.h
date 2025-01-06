@@ -89,6 +89,10 @@ extern void RTC_ClearSCCR( Rtc* pRtc, uint32_t dwMask ) ;
 
 extern uint32_t RTC_GetSR( Rtc* pRtc, uint32_t dwMask ) ;
 
+extern void RTC_GetTimeAndDate( Rtc* pRtc, uint8_t *pucHour, uint8_t *pucMinute, uint8_t *pucSecond, uint16_t *pwYear, uint8_t *pucMonth, uint8_t *pucDay, uint8_t *pucWeek );
+
+extern int RTC_SetTimeAndDate( Rtc* pRtc, uint8_t ucHour, uint8_t ucMinute, uint8_t ucSecond, uint16_t wYear, uint8_t ucMonth, uint8_t ucDay, uint8_t ucWeek );
+
 #ifdef __cplusplus
 }
 #endif

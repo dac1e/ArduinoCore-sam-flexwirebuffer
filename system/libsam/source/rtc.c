@@ -507,3 +507,84 @@ extern uint32_t RTC_GetSR( Rtc* pRtc, uint32_t dwMask )
     return (dwEvent & dwMask) ;
 }
 
+/**
+ * \brief Retrieves the current time and current date as stored in the RTC in several variables.
+ * Month, day and week values are numbered starting at 1.
+ *
+ * \param pucHour    If not null, current hour is stored in this variable.
+ * \param pucMinute  If not null, current minute is stored in this variable.
+ * \param pucSecond  If not null, current second is stored in this variable.
+ * \param pwYwear    If not null, current year is stored in this variable.
+ * \param pucMonth   If not null, current month is stored in this variable.
+ * \param pucDay     If not null, current day is stored in this variable.
+ * \param pucWeek    If not null, current week is stored in this variable.
+ */
+extern void RTC_GetTimeAndDate( Rtc* pRtc,
+    uint8_t *pucHour, uint8_t *pucMinute, uint8_t *pucSecond,
+    uint16_t *pwYear, uint8_t *pucMonth, uint8_t *pucDay, uint8_t *pucWeek )
+{
+    uint32_t dwTime;
+    uint32_t dwDate;
+    // Re-read time and date as long as we get unstable time.
+    do
+    {
+      dwTime = pRtc->RTC_TIMR;
+      do
+      {
+        dwDate = pRtc->RTC_CALR;
+      }
+      while ( dwDate != pRtc->RTC_CALR );
+    }
+    while( dwTime != pRtc->RTC_TIMR );
+
+    dwTime2time( dwTime, pucHour, pucMinute, pucSecond ) ;
+    dwDate2date( dwDate, pwYear, pucMonth, pucDay, pucWeek ) ;
+}
+
+/**
+ * \brief Sets the current time and date in the RTC.
+ * Month, day and week values must be numbered starting from 1.
+ *
+ * \note In successive update operations, the user must wait at least one second
+ * after resetting the UPDTIM/UPDCAL bit in the RTC_CR before setting these
+ * bits again. Please look at the RTC section of the datasheet for detail.
+ *
+ * \param ucHour    Current hour in 12 or 24 hour mode.
+ * \param ucMinute  Current minute.
+ * \param ucSecond  Current second.
+ * \param wYear  Current year.
+ * \param ucMonth Current month.
+ * \param ucDay   Current day.
+ * \param ucWeek  Day number in current week.
+ *
+ * \return 0 sucess, 1 fail to set
+ */
+extern int RTC_SetTimeAndDate( Rtc* pRtc,
+    uint8_t ucHour, uint8_t ucMinute, uint8_t ucSecond,
+    uint16_t wYear, uint8_t ucMonth, uint8_t ucDay, uint8_t ucWeek )
+{
+  const uint32_t dwTime = calculate_dwTime(pRtc, ucHour, ucMinute, ucSecond) ;
+  if ( dwTime == 0xFFFFFFFF )
+  {
+      return 1 ;
+  }
+
+  const uint32_t dwDate = calculate_dwDate(pRtc, wYear, ucMonth, ucDay, ucWeek);
+  /* value over flow */
+  if ( dwDate == 0xFFFFFFFF)
+  {
+      return 1 ;
+  }
+
+  /* Update calendar and time register together */
+  pRtc->RTC_CR |= (RTC_CR_UPDTIM | RTC_CR_UPDCAL);
+  while ((pRtc->RTC_SR & RTC_SR_ACKUPD) != RTC_SR_ACKUPD) ;
+
+  pRtc->RTC_SCCR = RTC_SCCR_ACKCLR;
+  pRtc->RTC_TIMR = dwTime ;
+  pRtc->RTC_CALR = dwDate ;
+  pRtc->RTC_CR &= ~((uint32_t)RTC_CR_UPDTIM | (uint32_t)RTC_CR_UPDCAL) ;
+  pRtc->RTC_SCCR |= RTC_SCCR_SECCLR; /* clear SECENV in SCCR */
+
+  return (int)(pRtc->RTC_VER & RTC_VER_NVCAL) ;
+}
