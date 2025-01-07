@@ -62,13 +62,13 @@ extern int RTC_SetTime( Rtc* pRtc, uint8_t ucHour, uint8_t ucMinute, uint8_t ucS
 
 extern void RTC_GetTime( Rtc* pRtc, uint8_t *pucHour, uint8_t *pucMinute, uint8_t *pucSecond ) ;
 
-extern int RTC_SetTimeAlarm( Rtc* pRtc, uint8_t *pucHour, uint8_t *pucMinute, uint8_t *pucSecond ) ;
+extern int RTC_SetTimeAlarm( Rtc* pRtc, const uint8_t *pucHour, const uint8_t *pucMinute, const uint8_t *pucSecond ) ;
 
 extern void RTC_GetDate( Rtc* pRtc, uint16_t *pwYear, uint8_t *pucMonth, uint8_t *pucDay, uint8_t *pucWeek ) ;
 
 extern int RTC_SetDate( Rtc* pRtc, uint16_t wYear, uint8_t ucMonth, uint8_t ucDay, uint8_t ucWeek ) ;
 
-extern int RTC_SetDateAlarm( Rtc* pRtc, uint8_t *pucMonth, uint8_t *pucDay ) ;
+extern int RTC_SetDateAlarm( Rtc* pRtc, const uint8_t *pucMonth, const uint8_t *pucDay ) ;
 
 extern void RTC_ClearSCCR( Rtc* pRtc, uint32_t dwMask ) ;
 
