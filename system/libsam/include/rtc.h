@@ -40,22 +40,7 @@
 /*----------------------------------------------------------------------------
  *        Headers
  *----------------------------------------------------------------------------*/
-#include "../chip.h"
-
 #include <stdint.h>
-
-/*----------------------------------------------------------------------------
- *        Definitions
- *----------------------------------------------------------------------------*/
-
-#define RTC_HOUR_BIT_LEN_MASK   0x3F
-#define RTC_MIN_BIT_LEN_MASK    0x7F
-#define RTC_SEC_BIT_LEN_MASK    0x7F
-#define RTC_CENT_BIT_LEN_MASK   0x7F
-#define RTC_YEAR_BIT_LEN_MASK   0xFF
-#define RTC_MONTH_BIT_LEN_MASK  0x1F
-#define RTC_DATE_BIT_LEN_MASK   0x3F
-#define RTC_WEEK_BIT_LEN_MASK   0x07
 
 /*----------------------------------------------------------------------------
  *        Exported functions
